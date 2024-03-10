@@ -58,6 +58,7 @@ public class IntervalItemsNumberKnapsackSolver extends FixedItemsNumberKnapsackS
         return true;
     }
 
+
     // we want to find what itemsNumber from the interval provides the best output value
     protected int getBestItemsNumber(DPEntity[][][] dp, IntervalItemsNumberKnapsackProblem problem, int n) {
         return getBestItemsNumber(dp, problem, n, problem.getMaxWeight());

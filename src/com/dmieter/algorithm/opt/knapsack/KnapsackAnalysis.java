@@ -6,6 +6,8 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.FixedItemsNumb
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.ItemMultiWeighted;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.MultiWeightsKnapsackProblem;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.IntervalKnapsackWithGroupsProblem;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -79,7 +81,12 @@ public class KnapsackAnalysis {
     }
 
     public static boolean validateWeights(KnapsackProblem problem) {
-        return validateWeights(problem.getMaxWeight(), problem.getSelectedItems());
+        if(problem instanceof IntervalKnapsackWithGroupsProblem) {
+            IntervalKnapsackWithGroupsProblem groupsProblem = (IntervalKnapsackWithGroupsProblem) problem;
+            return groupsProblem.getImprovedTotalWeight() <= problem.getMaxWeight();
+        } else {
+            return validateWeights(problem.getMaxWeight(), problem.getSelectedItems());
+        }
     }
 
     protected static boolean validateWeights(int maxWeight, List<Item> items) {
@@ -142,8 +149,14 @@ public class KnapsackAnalysis {
         StringBuilder result = new StringBuilder();
         problem.calculateStats();
         result.append("Problem solution value: ").append(problem.getTotalValue())
-                .append(", weight: ").append(problem.getTotalWeight())
-                .append("\nSelected items are the following:");
+                .append(", weight: ").append(problem.getTotalWeight());
+
+        if(problem instanceof IntervalKnapsackWithGroupsProblem) {
+            IntervalKnapsackWithGroupsProblem groupsProblem = (IntervalKnapsackWithGroupsProblem) problem;
+            result.append("\nImproved group solution value: ").append(groupsProblem.getImprovedTotalValue())
+                .append(", weight: ").append(groupsProblem.getImprovedTotalWeight());
+        }
+        result.append("\nSelected items are the following:");
 
         for (Item item : problem.getSelectedItems()) {
             result.append("\n Item number ").append(item.id).append(" value: ").append(item.getValue())

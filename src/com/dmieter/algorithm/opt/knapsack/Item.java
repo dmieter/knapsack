@@ -64,4 +64,9 @@ public class Item {
     public boolean equals(Item item){
         return (weight == item.weight && value == item.value);
     }
+
+    @Override
+    public String toString() {
+        return "Item " + id + " w: " + weight + " v: " + value;
+    }
 }

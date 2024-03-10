@@ -18,8 +18,17 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IKnapsack01Mul
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.TwoWeightsKnapsackSolver;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItem;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemIntervalKnapsackSolver;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemKnapsack;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.IntervalKnapsackWithGroupsProblem;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.GroupPropertyManager;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.FlexibleValueWeightGroupManager;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -32,7 +41,8 @@ public class Example {
      */
     public static void main(String[] args) {
         //runSimpleIntervalExample();
-        runSimpleChainExample3();
+        //runSimpleChainExample3();
+        runSimpleGroupExample();
     }
 
     private static void runSimpleExample() {
@@ -266,6 +276,69 @@ public class Example {
 
     }
     
+
+    private static void runSimpleGroupExample() {
+        Item item1 = new Item(1,30,3);
+        Item item2 = new Item(2,50,4);
+        Item item3 = new Item(3,60,14);
+        Item item4 = new Item(4,20,3);
+        Item item5 = new Item(5,20,5);
+        Item item6 = new Item(6,10,1);
+        Item item7 = new Item(7,10,5);
+        Item item8 = new Item(8,73,100);
+        
+        List<Item> items1 = new ArrayList<>();
+        items1.add(item1);
+        items1.add(item2);
+        items1.add(item3);
+        GroupItemKnapsack groupItem1 = new GroupItemKnapsack(1, items1);
+        groupItem1.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 1 -20%", null, k -> k > 2 ? 0.75d : k > 1 ? 0.85d : 1d));
+
+        List<Item> items2 = new ArrayList<>();
+        items2.add(item4);
+        items2.add(item5);
+        items2.add(item6);
+        GroupItemKnapsack groupItem2 = new GroupItemKnapsack(2, items2);
+        groupItem2.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 2 +50% value", k -> k > 1 ? 1.5d : 1d, null));
+
+        List<Item> items3 = new ArrayList<>();
+        items3.add(item7);
+        items3.add(item8);
+        GroupItemKnapsack groupItem3 = new GroupItemKnapsack(3, items3);
+        groupItem3.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 3 -10%", null, k -> k > 1 ? 0.96d : 1d));
+
+        List<GroupItem> groupItems = Arrays.asList(groupItem1, groupItem2, groupItem3);
+
+        // 1. Solve group problem
+        IntervalKnapsackWithGroupsProblem groupProblem = new IntervalKnapsackWithGroupsProblem();
+        groupProblem.setGroupItems(groupItems);
+        groupProblem.setMaxWeight(100);
+        groupProblem.setMinItemsNumber(3);
+        groupProblem.setMaxItemsNumber(4);
+        
+        GroupItemIntervalKnapsackSolver groupSolver = new GroupItemIntervalKnapsackSolver();
+        boolean groupSuccess = groupSolver.solve(groupProblem);
+        System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
+
+        // 2. Solve plain problem for control
+        List<Item> allItems = groupProblem.getGroupItems().stream()
+                                .flatMap(g -> g.getSubItems().stream())
+                                .collect(Collectors.toList());
+
+        IntervalItemsNumberKnapsackProblem plainProblem = new IntervalKnapsackWithGroupsProblem();
+        plainProblem.setItems(allItems);
+        groupProblem.setGroupItems(groupItems);
+        plainProblem.setMaxWeight(groupProblem.maxWeight);
+        plainProblem.setMinItemsNumber(groupProblem.getMinItemsNumber());
+        plainProblem.setMaxItemsNumber(groupProblem.getMaxItemsNumber());
+        
+        IKnapsack01MultiWeightsSolver fixedSolver = new IntervalItemsNumberKnapsackSolver();
+        boolean plainSuccess = fixedSolver.solve(plainProblem);
+        System.out.println(KnapsackAnalysis.getSolutionInfo(plainProblem));
+        System.out.println("Finished: " + groupSuccess + " " + plainSuccess);
+        
+    }
+
     
     private static void runSimpleMultExample() {
         Item item1 = new Item(1,5,1);
