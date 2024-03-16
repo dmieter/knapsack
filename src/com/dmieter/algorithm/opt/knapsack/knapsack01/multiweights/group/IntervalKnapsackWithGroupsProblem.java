@@ -20,6 +20,9 @@ public class IntervalKnapsackWithGroupsProblem extends IntervalItemsNumberKnapsa
 
     public void setGroupItems(List<GroupItem> groupItems) {
         this.groupItems = groupItems;
+        this.items = groupItems.stream()
+                    .flatMap(g -> g.subItems.stream())
+                    .collect(Collectors.toList());
     }
 
     public double getImprovedTotalValue() {

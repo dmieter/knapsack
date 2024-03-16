@@ -8,6 +8,7 @@ import com.dmieter.algorithm.opt.knapsack.Item;
 import com.dmieter.algorithm.opt.knapsack.KnapsackAnalysis;
 import com.dmieter.algorithm.opt.knapsack.data.DPEntity;
 import com.dmieter.algorithm.opt.knapsack.data.DPGroupEntity;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.DetailedIntervalItemsNumberKnapsackSolver;
 
 public class GroupItemIntervalKnapsackSolver extends DetailedIntervalItemsNumberKnapsackSolver {
 

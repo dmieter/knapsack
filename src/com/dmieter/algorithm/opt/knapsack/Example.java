@@ -6,6 +6,7 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.Knapsack01Solver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.chain.ChainKnapsackProblemSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.chain.ChainedKnapsackProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.chain.FixedItemsNumberKnapsackChainSolver;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.BruteForceIntervalKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.FixedItemsNumberKnapsackProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.chain.FixedItemsNumberKnapsackProblemChain;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.chain.IntervalItemsNumberKnapsackProblemChain;
@@ -310,6 +311,7 @@ public class Example {
         List<GroupItem> groupItems = Arrays.asList(groupItem1, groupItem2, groupItem3);
 
         // 1. Solve group problem
+        System.out.println("\n=========== GROUP KANPSACK RESULT ============\n");
         IntervalKnapsackWithGroupsProblem groupProblem = new IntervalKnapsackWithGroupsProblem();
         groupProblem.setGroupItems(groupItems);
         groupProblem.setMaxWeight(100);
@@ -317,25 +319,40 @@ public class Example {
         groupProblem.setMaxItemsNumber(4);
         
         GroupItemIntervalKnapsackSolver groupSolver = new GroupItemIntervalKnapsackSolver();
+        Long startTime = System.nanoTime();
         boolean groupSuccess = groupSolver.solve(groupProblem);
+        Long endTime = System.nanoTime();
         System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
 
         // 2. Solve plain problem for control
+        System.out.println("\n=========== PLAIN KANPSACK RESULT ============\n");
         List<Item> allItems = groupProblem.getGroupItems().stream()
                                 .flatMap(g -> g.getSubItems().stream())
                                 .collect(Collectors.toList());
 
         IntervalItemsNumberKnapsackProblem plainProblem = new IntervalKnapsackWithGroupsProblem();
         plainProblem.setItems(allItems);
-        groupProblem.setGroupItems(groupItems);
         plainProblem.setMaxWeight(groupProblem.maxWeight);
         plainProblem.setMinItemsNumber(groupProblem.getMinItemsNumber());
         plainProblem.setMaxItemsNumber(groupProblem.getMaxItemsNumber());
         
         IKnapsack01MultiWeightsSolver fixedSolver = new IntervalItemsNumberKnapsackSolver();
+        startTime = System.nanoTime();
         boolean plainSuccess = fixedSolver.solve(plainProblem);
+        endTime = System.nanoTime();
         System.out.println(KnapsackAnalysis.getSolutionInfo(plainProblem));
-        System.out.println("Finished: " + groupSuccess + " " + plainSuccess);
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
+
+        // 1. Solve with brute
+        System.out.println("\n=========== BRUTE FORCE RESULT ============\n");
+        BruteForceIntervalKnapsackSolver bruteSolver = new BruteForceIntervalKnapsackSolver();
+        startTime = System.nanoTime();
+        boolean bruteSuccess = bruteSolver.solve(groupProblem);
+        endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime) * 1d/1000000);
+        System.out.println("\nFinished: " + groupSuccess + " " + plainSuccess + " " + bruteSuccess);
         
     }
 

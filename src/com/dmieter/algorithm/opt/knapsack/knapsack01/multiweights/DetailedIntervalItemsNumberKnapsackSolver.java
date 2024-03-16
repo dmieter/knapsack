@@ -1,10 +1,9 @@
-package com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group;
+package com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights;
 
 import com.dmieter.algorithm.opt.knapsack.KnapsackAnalysis;
 import com.dmieter.algorithm.opt.knapsack.data.DPEntity;
-import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.FixedItemsNumberKnapsackProblem;
-import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackSolver;
 
+// saves some calculation details and logs to enable solution post processing, otherwise the same as parent
 public class DetailedIntervalItemsNumberKnapsackSolver extends IntervalItemsNumberKnapsackSolver {
     
     protected DPEntity dpFinal[][][];  // saving dp table for additional analysis of the solution

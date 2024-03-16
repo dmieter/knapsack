@@ -13,6 +13,8 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.Interval
 
 public class FlexibleValueWeightGroupManager extends GroupPropertyManager {
 
+    private static boolean PRINT_LOGS = false;
+
     private Integer maxOriginWeight = Integer.MIN_VALUE;
     private Function<Integer, Double> valueBoostFunction;
     private Function<Integer, Double> weightReductionFunction;
@@ -91,8 +93,10 @@ public class FlexibleValueWeightGroupManager extends GroupPropertyManager {
         Double valueBoost = getImprovedValue(selectedGroupItems.size(), totalValue) - totalValue;
 
         if(weightReduction > 0 || valueBoost > 0) {
-            System.out.println("Weight reudced by " + weightReduction + " Value improved by " + valueBoost + " as " 
-            + selectedGroupItems.size() + " items " + selectedGroupItems + " selected with group property " + propertyName);
+            if(PRINT_LOGS) {
+                System.out.println("Weight reudced by " + weightReduction + " Value improved by " + valueBoost + " as " 
+                + selectedGroupItems.size() + " items " + selectedGroupItems + " selected with group property " + propertyName);
+            }
         }
 
         problem.improveTotalValue(valueBoost);

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.dmieter.algorithm.opt.knapsack.Item;
 import com.dmieter.algorithm.opt.knapsack.data.DPEntity;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.DetailedIntervalItemsNumberKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackProblem;
 
 public class GroupItemKnapsack extends GroupItem {

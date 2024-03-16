@@ -49,17 +49,17 @@ public class KnapsackAnalysis {
     public static boolean validateSolution(FixedItemsNumberKnapsackProblem problem) {
 
         if (!validateDuplicatedItems(problem)) {
-            System.out.println("duplicating items check failed");
+            //System.out.println("duplicating items check failed");
             return false;
         }
 
         if (!validateWeights(problem)) {
-            System.out.println("weight check is failed");
+            //System.out.println("weight check is failed");
             return false;
         }
 
         if (!validateItemsNumber(problem)) {
-            System.out.println("items number check is failed");
+            //System.out.println("items number check is failed");
             return false;
         }
 
