@@ -49,7 +49,7 @@ public class GroupItemKnapsack extends GroupItem {
         /* 1. Backward induction from tight solution */
         int weightLeft = startingWeight;
         int iterations = 0;
-        int consideredItemNum = localMaxItemsNum;
+        int consideredItemNum = subItems.size(); // start from last item
         int itemsLeft = amount;
         while (itemsLeft > 0) {
 
