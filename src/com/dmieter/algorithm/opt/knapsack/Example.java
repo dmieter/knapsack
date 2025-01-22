@@ -13,16 +13,13 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.chain.IntervalItemsNumberKn
 import com.dmieter.algorithm.opt.knapsack.knapsack01.chain.KnapsackProblemChain;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.FixedItemsNumberKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.FixedItemsNumberKnapsackSolverOpt;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.*;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.multiplicative.FixedItemsMultiplicativeProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.multiplicative.FixedItemsMultiplicativeSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IKnapsack01MultiWeightsSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.TwoWeightsKnapsackSolver;
-import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItem;
-import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemIntervalKnapsackSolver;
-import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemKnapsack;
-import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.IntervalKnapsackWithGroupsProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.GroupPropertyManager;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.FlexibleValueWeightGroupManager;
 
@@ -44,7 +41,8 @@ public class Example {
         //runSimpleIntervalExample();
         //runSimpleChainExample3();
         //runSimpleGroupExample();
-        runSimplestGroupExample();
+        //runSimplestGroupExample();
+        runSimpleHierarchicalExample();
     }
 
     private static void runSimpleExample() {
@@ -329,7 +327,7 @@ public class Example {
         // 2. Solve plain problem for control
         System.out.println("\n=========== PLAIN KANPSACK RESULT ============\n");
         List<Item> allItems = groupProblem.getGroupItems().stream()
-                                .flatMap(g -> g.getSubItems().stream())
+                                .flatMap(g -> g.collectInnerSubItems().stream())
                                 .collect(Collectors.toList());
 
         IntervalItemsNumberKnapsackProblem plainProblem = new IntervalKnapsackWithGroupsProblem();
@@ -412,6 +410,87 @@ public class Example {
         System.out.println("\nTime, ms: " + (endTime - startTime) * 1d/1000000);
         System.out.println("\nFinished: " + groupSuccess + " " + bruteSuccess);
         
+    }
+
+    private static void runSimpleHierarchicalExample() {
+        Item item1 = new Item(1,28,250);
+        Item item2 = new Item(2,25,400);
+        Item item3 = new Item(3,42,500);
+        Item item4 = new Item(4,30,1000);
+        Item item5 = new Item(5,24,250);
+        Item item6 = new Item(6,50,400);
+        Item item7 = new Item(7,28,500);
+        Item item8 = new Item(8,40,600);
+        Item item9 = new Item(9,35,300);
+
+        List<Item> items11 = new ArrayList<>();
+        items11.add(item1);
+        items11.add(item2);
+        items11.add(item3);
+        GroupItemKnapsack groupItem11 = new GroupItemKnapsack(11, items11);
+        groupItem11.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 11 Bonus Perf", k -> k > 2 ? 1.9d : k > 1 ? 1.3d : 1d, null));
+
+        List<Item> items12 = new ArrayList<>();
+        items12.add(item4);
+        items12.add(item5);
+        GroupItemKnapsack groupItem12 = new GroupItemKnapsack(12, items12);
+        groupItem12.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 12 Bonus Perf", k -> k > 1 ? 1.15d : 1d, null));
+
+        List<GroupItem> groupItems1 = new ArrayList<>();
+        groupItems1.add(groupItem11);
+        groupItems1.add(groupItem12);
+        GroupItemGroupKnapsack groupItem1 = new GroupItemGroupKnapsack(1, groupItems1);
+        groupItem1.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 1 Bonus Perf", k -> k > 1 ? 1.05d : 1d, null));
+
+        List<Item> items21 = new ArrayList<>();
+        items21.add(item6);
+        items21.add(item7);
+        GroupItemKnapsack groupItem21 = new GroupItemKnapsack(21, items21);
+        groupItem21.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 21 Bonus Perf", k -> k > 1 ? 1.2d : 1d, null));
+
+        List<Item> items22 = new ArrayList<>();
+        items22.add(item8);
+        items22.add(item9);
+        GroupItemKnapsack groupItem22 = new GroupItemKnapsack(22, items22);
+        groupItem22.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 22 Bonus Perf", k -> k > 0 ? 1.05d : 1d, null));
+
+        List<GroupItem> groupItems2 = new ArrayList<>();
+        groupItems2.add(groupItem21);
+        groupItems2.add(groupItem22);
+        GroupItemGroupKnapsack groupItem2 = new GroupItemGroupKnapsack(2, groupItems2);
+        groupItem2.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 2 Bonus Perf", k -> k > 1 ? 1.2d : 1d, null));
+
+        List<GroupItem> groupItems = Arrays.asList(groupItem1, groupItem2);
+
+        // 1. Solve group problem
+        System.out.println("\n=========== GROUP KANPSACK RESULT ============\n");
+        IntervalKnapsackWithGroupsProblem groupProblem = new IntervalKnapsackWithGroupsProblem();
+        groupProblem.setGroupItems(groupItems);
+        groupProblem.setMaxWeight(100);
+        groupProblem.setMinItemsNumber(3);
+        groupProblem.setMaxItemsNumber(3);
+
+        GroupItemIntervalKnapsackSolver groupSolver = new GroupItemIntervalKnapsackSolver();
+        Long startTime = System.nanoTime();
+        boolean groupSuccess = groupSolver.solve(groupProblem);
+        Long endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
+
+
+
+        // 3. Solve with brute
+        System.out.println("\n=========== BRUTE FORCE RESULT ============\n");
+        BruteForceIntervalKnapsackSolver bruteSolver = new BruteForceIntervalKnapsackSolver();
+        startTime = System.nanoTime();
+        boolean bruteSuccess = bruteSolver.solve(groupProblem);
+        endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime) * 1d/1000000);
+        System.out.println("\nFinished: " + groupSuccess + " " + bruteSuccess);
+
+        groupProblem.calculateStats();
+
     }
 
     

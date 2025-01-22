@@ -32,7 +32,7 @@ public class GroupItemIntervalKnapsackSolver extends DetailedIntervalItemsNumber
             return false;
         }
 
-        dpFinal = dp;
+        dpGroupFinal = dp;
 
         /* running backward induction to retrieve actual solution */
         if (!backwardInductionGroup(dp, problem, n)) {
@@ -140,17 +140,17 @@ public class GroupItemIntervalKnapsackSolver extends DetailedIntervalItemsNumber
         int itemsLeft = requiredItemsNumber;
         while (itemsLeft > 0) {
 
-            /* adding next best item */
-            DPGroupEntity dpEntity = dp[weightLeft][consideredGroupItemNum][itemsLeft];
-            GroupItem groupItem = problem.getGroupItems().get(dpEntity.getRelatedGroupItemNum());
+                /* adding next best item */
+                DPGroupEntity dpEntity = dp[weightLeft][consideredGroupItemNum][itemsLeft];
+                GroupItem groupItem = problem.getGroupItems().get(dpEntity.getRelatedGroupItemNum());
 
-            //adding a set of items from the selected group item
-            problem.getSelectedItems().addAll(groupItem.getBestItems(dpEntity.usedWeight, dpEntity.usedAmount));
+                //adding a set of items from the selected group item
+                problem.getSelectedItems().addAll(groupItem.getBestItems(dpEntity.usedWeight, dpEntity.usedAmount));
 
-            /* modifying indexes to find the next item */
-            weightLeft -= dpEntity.usedWeight;
-            itemsLeft -= dpEntity.usedAmount;
-            consideredGroupItemNum = dpEntity.getRelatedGroupItemNum();
+                /* modifying indexes to find the next item */
+                weightLeft -= dpEntity.usedWeight;
+                itemsLeft -= dpEntity.usedAmount;
+                consideredGroupItemNum = dpEntity.getRelatedGroupItemNum();
             /* if we already added dpEntity.relatedObjectID: (j-1) in item list and jth in DP
                                                             then we need to consider only earlier items, starting from (j-1) in DP */
 
@@ -165,5 +165,10 @@ public class GroupItemIntervalKnapsackSolver extends DetailedIntervalItemsNumber
         problem.calculateStats();
 
         return true;
+    }
+
+    @Override
+    public DPGroupEntity[][][] getDPTable() {
+        return dpGroupFinal;
     }
 }

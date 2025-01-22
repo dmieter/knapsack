@@ -1,6 +1,7 @@
 package com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.dmieter.algorithm.opt.knapsack.Item;
@@ -19,13 +20,21 @@ public abstract class GroupItem {
         this.subItems.addAll(subItems);
     }
 
-    public List<Item> getSubItems() {
-        return subItems;
-    }
-
     public void setGroupPropertyManager(GroupPropertyManager groupPropertyManager) {
         this.groupPropertyManager = groupPropertyManager;
-        groupPropertyManager.apply(subItems);
+        groupPropertyManager.apply(collectInnerSubItems());
+    }
+
+    public List<GroupPropertyManager> collectGroupPropertyManagers() {
+        if(groupPropertyManager != null) {
+            return Collections.singletonList(groupPropertyManager);
+        } else {
+            return Collections.EMPTY_LIST;
+        }
+    }
+
+    public List<Item> collectInnerSubItems() {
+        return subItems != null ? subItems : Collections.EMPTY_LIST;
     }
 
     // returns map of all possible Items as structure: amount -> (total value, total weight)

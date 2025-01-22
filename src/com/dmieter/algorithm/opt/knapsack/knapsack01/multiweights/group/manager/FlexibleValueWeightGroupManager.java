@@ -68,7 +68,8 @@ public class FlexibleValueWeightGroupManager extends GroupPropertyManager {
     // decoding original weight from sale/decreased weight to that of the original problem without group improvements
     @Override
     public Integer getOriginWeight(Integer weight, Integer amount) {
-        Integer originWeight = ((Double) Math.ceil(weight/getWeightReductionFactor(amount))).intValue();
+        Integer originWeight = ((Double) Math.floor(weight/getWeightReductionFactor(amount))).intValue();
+        //Integer originWeight = ((Double) Math.ceil(weight/getWeightReductionFactor(amount))).intValue();
 
         // better have exception then possibly incorrect behavior with strict upper bound
         //return originWeight <= maxOriginWeight ? originWeight : maxOriginWeight;  

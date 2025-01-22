@@ -10,6 +10,7 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.
 
 public class IntervalKnapsackWithGroupsProblem extends IntervalItemsNumberKnapsackProblem{
     protected List<GroupItem> groupItems = new ArrayList<>();
+    protected List<GroupPropertyManager> groupPropertyManagers = new ArrayList<>();
 
     protected double improvedTotalValue = 0;
     protected int improvedTotalWeight = 0;
@@ -21,7 +22,7 @@ public class IntervalKnapsackWithGroupsProblem extends IntervalItemsNumberKnapsa
     public void setGroupItems(List<GroupItem> groupItems) {
         this.groupItems = groupItems;
         this.items = groupItems.stream()
-                    .flatMap(g -> g.subItems.stream())
+                    .flatMap(g -> g.collectInnerSubItems().stream())
                     .collect(Collectors.toList());
     }
 
@@ -46,9 +47,11 @@ public class IntervalKnapsackWithGroupsProblem extends IntervalItemsNumberKnapsa
 
         improvedTotalValue = totalValue;
         improvedTotalWeight = totalWeight;
-        groupItems.stream()
-                    .filter(g -> g.groupPropertyManager != null)
-                    .map(g -> g.groupPropertyManager)
-                    .forEach(g -> g.updateSolution(this));  // update solution based on group dependencies between selected items
+//        if(groupPropertyManagers.isEmpty()) {
+//            groupPropertyManagers.addAll(groupItems.stream().flatMap(g -> g.collectGroupPropertyManagers().stream()).collect(Collectors.toList()));
+//        }
+
+        groupPropertyManagers = groupItems.stream().flatMap(g -> g.collectGroupPropertyManagers().stream()).collect(Collectors.toList());
+        groupPropertyManagers.forEach(g -> g.updateSolution(this));  // update solution based on group dependencies between selected items
     }
 }
