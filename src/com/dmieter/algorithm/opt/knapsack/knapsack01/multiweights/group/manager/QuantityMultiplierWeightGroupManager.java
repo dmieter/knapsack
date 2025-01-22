@@ -11,25 +11,25 @@ import java.util.stream.Collectors;
 import com.dmieter.algorithm.opt.knapsack.Item;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.IntervalKnapsackWithGroupsProblem;
 
-public class FlexibleValueWeightGroupManager extends GroupPropertyManager {
+public class QuantityMultiplierWeightGroupManager extends GroupPropertyManager {
 
-    private static boolean PRINT_LOGS = false;
+    public static boolean PRINT_LOGS = false;
 
     private Integer maxOriginWeight = Integer.MIN_VALUE;
     private Function<Integer, Double> valueBoostFunction;
     private Function<Integer, Double> weightReductionFunction;
 
-    public FlexibleValueWeightGroupManager(String name) {
+    public QuantityMultiplierWeightGroupManager(String name) {
         this.propertyName = name;
     }
 
-    public FlexibleValueWeightGroupManager(String name, Function<Integer, Double> valueBoostFunction, Function<Integer, Double> weightReductionFunction) {
+    public QuantityMultiplierWeightGroupManager(String name, Function<Integer, Double> valueBoostFunction, Function<Integer, Double> weightReductionFunction) {
         this.propertyName = name;
         this.valueBoostFunction = valueBoostFunction;
         this.weightReductionFunction = weightReductionFunction;
     }
 
-    private Double getValueBoostFactor(Integer amount) {
+    protected Double getValueBoostFactor(Integer amount) {
         if(valueBoostFunction == null) { 
             return 1d; 
         }
@@ -51,7 +51,7 @@ public class FlexibleValueWeightGroupManager extends GroupPropertyManager {
         return ((Double) Math.ceil(weight * getWeightReductionFactor(amount))).intValue();
     }
 
-    private Double getImprovedValue(Integer amount, Double value) {
+    protected Double getImprovedValue(Integer amount, Double value) {
         return value * getValueBoostFactor(amount);
     }
 

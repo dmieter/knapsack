@@ -14,6 +14,7 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.chain.KnapsackProblemChain;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.FixedItemsNumberKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.FixedItemsNumberKnapsackSolverOpt;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.*;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.QuantityAdditionWeightGroupManager;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.multiplicative.FixedItemsMultiplicativeProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.multiplicative.FixedItemsMultiplicativeSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IKnapsack01MultiWeightsSolver;
@@ -21,7 +22,7 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsN
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.TwoWeightsKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.GroupPropertyManager;
-import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.FlexibleValueWeightGroupManager;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.QuantityMultiplierWeightGroupManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -292,20 +293,20 @@ public class Example {
         items1.add(item2);
         items1.add(item3);
         GroupItemKnapsack groupItem1 = new GroupItemKnapsack(1, items1);
-        groupItem1.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 1 -20%", null, k -> k > 2 ? 0.75d : k > 1 ? 0.85d : 1d));
+        groupItem1.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 1 -20%", null, k -> k > 2 ? 0.75d : k > 1 ? 0.85d : 1d));
 
         List<Item> items2 = new ArrayList<>();
         items2.add(item4);
         items2.add(item5);
         items2.add(item6);
         GroupItemKnapsack groupItem2 = new GroupItemKnapsack(2, items2);
-        groupItem2.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 2 +50% value", k -> k > 1 ? 1.5d : 1d, null));
+        groupItem2.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 2 +50% value", k -> k > 1 ? 1.5d : 1d, null));
 
         List<Item> items3 = new ArrayList<>();
         items3.add(item7);
         items3.add(item8);
         GroupItemKnapsack groupItem3 = new GroupItemKnapsack(3, items3);
-        groupItem3.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 3 -10%", null, k -> k > 1 ? 0.96d : 1d));
+        groupItem3.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 3 -10%", null, k -> k > 1 ? 0.96d : 1d));
 
         List<GroupItem> groupItems = Arrays.asList(groupItem1, groupItem2, groupItem3);
 
@@ -371,7 +372,7 @@ public class Example {
         items1.add(item3);
         items1.add(item4);
         GroupItemKnapsack groupItem1 = new GroupItemKnapsack(1, items1);
-        groupItem1.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 1 SALE", null, k -> k > 2 ? 0.75d : k > 1 ? 0.85d : 1d));
+        groupItem1.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 1 SALE", null, k -> k > 2 ? 0.75d : k > 1 ? 0.85d : 1d));
 
         List<Item> items2 = new ArrayList<>();
         items2.add(item5);
@@ -379,7 +380,7 @@ public class Example {
         items2.add(item7);
         items2.add(item8);
         GroupItemKnapsack groupItem2 = new GroupItemKnapsack(2, items2);
-        groupItem2.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 2 BONUS PERF", k -> k > 1 ? 1.2d : 1d, null));
+        groupItem2.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 2 BONUS PERF", k -> k > 1 ? 1.2d : 1d, null));
 
         List<GroupItem> groupItems = Arrays.asList(groupItem1, groupItem2);
 
@@ -412,6 +413,12 @@ public class Example {
         
     }
 
+
+    /** TODO
+     * 0. Seems we can't use addition and multiplier group managers together as order of their application in a single hierarchy matters
+     * 1. There's a bug on calculating total improved value for hierarchy of multiplier managers as improved value is calculated and added separately for each manager.. need a hierarchy of multiplication
+     * 2. So addition-based group managers should work fine
+      */
     private static void runSimpleHierarchicalExample() {
         Item item1 = new Item(1,28,250);
         Item item2 = new Item(2,25,400);
@@ -428,37 +435,43 @@ public class Example {
         items11.add(item2);
         items11.add(item3);
         GroupItemKnapsack groupItem11 = new GroupItemKnapsack(11, items11);
-        groupItem11.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 11 Bonus Perf", k -> k > 2 ? 1.9d : k > 1 ? 1.3d : 1d, null));
+        //groupItem11.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 11 Bonus Perf", k -> k > 2 ? 1.9d : k > 1 ? 1.3d : 1d, null));
+        groupItem11.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Group 11 Addition Perf", k -> k > 1 ? (k - 1) * 80d : 0d, null));
 
         List<Item> items12 = new ArrayList<>();
         items12.add(item4);
         items12.add(item5);
         GroupItemKnapsack groupItem12 = new GroupItemKnapsack(12, items12);
-        groupItem12.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 12 Bonus Perf", k -> k > 1 ? 1.15d : 1d, null));
+        //groupItem12.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 12 Bonus Perf", k -> k > 1 ? 1.15d : 1d, null));
+        groupItem12.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Group 12 Addition Perf", k -> k > 1 ? (k - 1) * 150d : 0d, null));
 
         List<GroupItem> groupItems1 = new ArrayList<>();
         groupItems1.add(groupItem11);
         groupItems1.add(groupItem12);
         GroupItemGroupKnapsack groupItem1 = new GroupItemGroupKnapsack(1, groupItems1);
-        groupItem1.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 1 Bonus Perf", k -> k > 1 ? 1.05d : 1d, null));
+        //groupItem1.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 1 Bonus Perf", k -> k > 1 ? 1.05d : 1d, null));
+        groupItem1.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Group 1 Addition Perf", k -> k > 1 ? (k - 1) * 40d : 0d, null));
 
         List<Item> items21 = new ArrayList<>();
         items21.add(item6);
         items21.add(item7);
         GroupItemKnapsack groupItem21 = new GroupItemKnapsack(21, items21);
-        groupItem21.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 21 Bonus Perf", k -> k > 1 ? 1.2d : 1d, null));
+        //groupItem21.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 21 Bonus Perf", k -> k > 1 ? 1.2d : 1d, null));
+        groupItem21.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Group 21 Addition Perf", k -> k > 1 ? (k - 1) * 100d : 0d, null));
 
         List<Item> items22 = new ArrayList<>();
         items22.add(item8);
         items22.add(item9);
         GroupItemKnapsack groupItem22 = new GroupItemKnapsack(22, items22);
-        groupItem22.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 22 Bonus Perf", k -> k > 0 ? 1.05d : 1d, null));
+        //groupItem22.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 22 Bonus Perf", k -> k > 0 ? 1.05d : 1d, null));
+        groupItem22.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Group 22 Addition Perf", k -> k > 1 ? (k - 1) * 200d : 0d, null));
 
         List<GroupItem> groupItems2 = new ArrayList<>();
         groupItems2.add(groupItem21);
         groupItems2.add(groupItem22);
         GroupItemGroupKnapsack groupItem2 = new GroupItemGroupKnapsack(2, groupItems2);
-        groupItem2.setGroupPropertyManager(new FlexibleValueWeightGroupManager("Group 2 Bonus Perf", k -> k > 1 ? 1.2d : 1d, null));
+        //groupItem2.setGroupPropertyManager(new QuantityMultiplierWeightGroupManager("Group 2 Bonus Perf", k -> k > 1 ? 1.1d : 1d, null));
+        groupItem2.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Group 2 Addition Perf", k -> k > 1 ? (k - 1) * 50d : 0d, null));
 
         List<GroupItem> groupItems = Arrays.asList(groupItem1, groupItem2);
 
@@ -477,7 +490,9 @@ public class Example {
         System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
         System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
 
-
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = true;
+        groupProblem.calculateStats();
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
 
         // 3. Solve with brute
         System.out.println("\n=========== BRUTE FORCE RESULT ============\n");
@@ -489,7 +504,9 @@ public class Example {
         System.out.println("\nTime, ms: " + (endTime - startTime) * 1d/1000000);
         System.out.println("\nFinished: " + groupSuccess + " " + bruteSuccess);
 
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = true;
         groupProblem.calculateStats();
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
 
     }
 
