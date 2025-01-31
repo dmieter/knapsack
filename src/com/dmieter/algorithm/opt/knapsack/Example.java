@@ -43,7 +43,8 @@ public class Example {
         //runSimpleChainExample3();
         //runSimpleGroupExample();
         //runSimplestGroupExample();
-        runSimpleHierarchicalExample();
+        //runSimpleHierarchicalExample();
+        runModelHierarchicalExample();
     }
 
     private static void runSimpleExample() {
@@ -420,6 +421,7 @@ public class Example {
      * 2. So addition-based group managers should work fine
       */
     private static void runSimpleHierarchicalExample() {
+
         Item item1 = new Item(1,28,250);
         Item item2 = new Item(2,25,400);
         Item item3 = new Item(3,42,500);
@@ -507,6 +509,137 @@ public class Example {
         QuantityMultiplierWeightGroupManager.PRINT_LOGS = true;
         groupProblem.calculateStats();
         QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
+
+    }
+
+    private static void runModelHierarchicalExample() {
+        int vmCount = 5;
+        int totalCost = 42;
+
+        int genNum = vmCount;
+        int baseValue = 3;
+
+        // DC1
+        int startingId = 101;
+        int dcCost = 9;
+        List<Item> itemsDC1 = new ArrayList<>();
+        for(int i = startingId; i < startingId + genNum; i++) {
+            Item item = new Item(i,dcCost,baseValue);
+            itemsDC1.add(item);
+        }
+
+        // DC2
+        startingId = 201;
+        dcCost = 5;
+        List<Item> itemsDC2 = new ArrayList<>();
+        for(int i = startingId; i < startingId + genNum; i++) {
+            Item item = new Item(i,dcCost,baseValue);
+            itemsDC2.add(item);
+        }
+
+        // DC3
+        startingId = 301;
+        dcCost = 7;
+        List<Item> itemsDC3 = new ArrayList<>();
+        for(int i = startingId; i < startingId + genNum; i++) {
+            Item item = new Item(i,dcCost,baseValue);
+            itemsDC3.add(item);
+        }
+
+        // DC4
+        startingId = 401;
+        dcCost = 12;
+        List<Item> itemsDC4 = new ArrayList<>();
+        for(int i = startingId; i < startingId + genNum; i++) {
+            Item item = new Item(i,dcCost,baseValue);
+            itemsDC4.add(item);
+        }
+
+        // DC5
+        startingId = 501;
+        dcCost = 10;
+        List<Item> itemsDC5 = new ArrayList<>();
+        for(int i = startingId; i < startingId + genNum; i++) {
+            Item item = new Item(i,dcCost,baseValue);
+            itemsDC5.add(item);
+        }
+
+        // DC6
+        startingId = 601;
+        dcCost = 15;
+        List<Item> itemsDC6 = new ArrayList<>();
+        for(int i = startingId; i < startingId + genNum; i++) {
+            Item item = new Item(i,dcCost,baseValue);
+            itemsDC6.add(item);
+        }
+
+
+
+        GroupItemKnapsack groupItemDC1 = new GroupItemKnapsack(1, itemsDC1);
+        groupItemDC1.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("DC1", k -> k > 0 ? k * 6d : 0d, null));
+
+        GroupItemKnapsack groupItemDC2 = new GroupItemKnapsack(2, itemsDC2);
+        groupItemDC2.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("DC2", k -> k > 1 ? (k - 1) * 5d : 0d, null));
+
+        GroupItemKnapsack groupItemDC3 = new GroupItemKnapsack(3, itemsDC3);
+        groupItemDC3.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("DC3", k -> k > 2 ? (k - 2) * 7d : 0d, null));
+
+        GroupItemKnapsack groupItemDC4 = new GroupItemKnapsack(4, itemsDC4);
+        groupItemDC4.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("DC4", k -> k > 1 ? (k - 1) * k * 2d : 0d, null));
+
+        GroupItemKnapsack groupItemDC5 = new GroupItemKnapsack(5, itemsDC5);
+        groupItemDC5.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("DC5", k -> k > 0 ? k * 10d : 0d, null));
+
+        GroupItemKnapsack groupItemDC6 = new GroupItemKnapsack(6, itemsDC6);
+        groupItemDC6.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("DC6", k -> k > 1 ? (k - 1) * 20d : 0d, null));
+
+
+        GroupItemGroupKnapsack groupItemZoneA = new GroupItemGroupKnapsack(1000, Arrays.asList(groupItemDC1));
+        groupItemZoneA.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Availability Zone A", k -> k > 1 ? (k - 1) * 4d : 0d, null));
+
+        GroupItemGroupKnapsack groupItemZoneB = new GroupItemGroupKnapsack(2000, Arrays.asList(groupItemDC2, groupItemDC3));
+        groupItemZoneB.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Availability Zone B", k -> k > 1 ? (k - 1) * 6d : 0d, null));
+
+        GroupItemGroupKnapsack groupItemZoneC = new GroupItemGroupKnapsack(3000, Arrays.asList(groupItemDC4, groupItemDC5, groupItemDC6));
+        groupItemZoneC.setGroupPropertyManager(new QuantityAdditionWeightGroupManager("Availability Zone C", k -> k > 1 ? (k - 1) * k * 1d : 0d, null));
+
+
+        List<GroupItem> regionGroupItems = Arrays.asList(groupItemZoneA, groupItemZoneB, groupItemZoneC);
+
+        // 1. Solve group problem
+        System.out.println("\n=========== GROUP KNAPSACK RESULT ============\n");
+        IntervalKnapsackWithGroupsProblem groupProblem = new IntervalKnapsackWithGroupsProblem();
+        groupProblem.setGroupItems(regionGroupItems);
+        groupProblem.setMaxWeight(totalCost);
+        groupProblem.setMinItemsNumber(vmCount);
+        groupProblem.setMaxItemsNumber(vmCount);
+
+        GroupItemIntervalKnapsackSolver groupSolver = new GroupItemIntervalKnapsackSolver();
+        Long startTime = System.nanoTime();
+        boolean groupSuccess = groupSolver.solve(groupProblem);
+        Long endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
+
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = true;
+        groupProblem.calculateStats();
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
+
+        // 3. Solve with brute
+        if(true) {
+            System.out.println("\n=========== BRUTE FORCE RESULT ============\n");
+            BruteForceIntervalKnapsackSolver bruteSolver = new BruteForceIntervalKnapsackSolver();
+            startTime = System.nanoTime();
+            boolean bruteSuccess = bruteSolver.solve(groupProblem);
+            endTime = System.nanoTime();
+            System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
+            System.out.println("\nTime, ms: " + (endTime - startTime) * 1d / 1000000);
+            System.out.println("\nFinished: " + groupSuccess + " " + bruteSuccess);
+
+            QuantityMultiplierWeightGroupManager.PRINT_LOGS = true;
+            groupProblem.calculateStats();
+            QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
+        }
 
     }
 
