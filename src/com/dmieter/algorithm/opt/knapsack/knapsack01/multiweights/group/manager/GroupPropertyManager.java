@@ -11,7 +11,7 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.Interval
 
 public abstract class GroupPropertyManager {
 
-    protected String propertyName = "Group Property";
+    public String propertyName = "Group Property";
 
     protected List<Item> improvedItems = new ArrayList<>();
 

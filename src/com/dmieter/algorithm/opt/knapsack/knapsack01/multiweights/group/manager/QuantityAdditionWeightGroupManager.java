@@ -8,7 +8,20 @@ public class QuantityAdditionWeightGroupManager extends QuantityMultiplierWeight
         super(name, valueBoostFunction, weightReductionFunction);
     }
 
+    @Override
     protected Double getImprovedValue(Integer amount, Double value) {
         return value + getValueBoostFactor(amount);
     }
+    
+    @Override
+    protected Double getValueBoostFactor(Integer amount) {
+        if(valueBoostFunction == null) { 
+            return 0d;      // as this is addition, not multiplication
+        }
+        else {
+            return valueBoostFunction.apply(amount);
+        }
+    }
+    
+    
 }

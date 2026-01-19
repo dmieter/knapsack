@@ -16,8 +16,8 @@ public class QuantityMultiplierWeightGroupManager extends GroupPropertyManager {
     public static boolean PRINT_LOGS = false;
 
     private Integer maxOriginWeight = Integer.MIN_VALUE;
-    private Function<Integer, Double> valueBoostFunction;
-    private Function<Integer, Double> weightReductionFunction;
+    protected Function<Integer, Double> valueBoostFunction;
+    protected Function<Integer, Double> weightReductionFunction;
 
     public QuantityMultiplierWeightGroupManager(String name) {
         this.propertyName = name;
@@ -99,7 +99,7 @@ public class QuantityMultiplierWeightGroupManager extends GroupPropertyManager {
                 + selectedGroupItems.size() + " items " + selectedGroupItems + " selected with group property " + propertyName);
             }
         }
-
+        
         problem.improveTotalValue(valueBoost);
         problem.improveTotalWeight(-weightReduction);
         

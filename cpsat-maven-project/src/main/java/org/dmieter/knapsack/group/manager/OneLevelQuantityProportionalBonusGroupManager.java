@@ -15,16 +15,16 @@ import java.util.List;
 import java.util.Map;
 
 
-public class OneLevelQuantityBonusGroupManager extends SatQuantityAdditionGroupManager {
+public class OneLevelQuantityProportionalBonusGroupManager extends SatQuantityAdditionGroupManager {
     
     private int quantityThreshold = 0;
-    private int singleBonus = 0;
+    private int itemBonus = 0;
     
     
-    public OneLevelQuantityBonusGroupManager(String name, int quantityThreshold, int singleBonus) {
-        super(name, k -> k >= quantityThreshold ? singleBonus : 0d, null);
+    public OneLevelQuantityProportionalBonusGroupManager(String name, int quantityThreshold, int itemBonus) {
+        super(name, k -> k >= quantityThreshold ? k*itemBonus : 0d, null);
         this.quantityThreshold = quantityThreshold;
-        this.singleBonus = singleBonus;
+        this.itemBonus = itemBonus;
     }
 
     @Override
@@ -32,6 +32,7 @@ public class OneLevelQuantityBonusGroupManager extends SatQuantityAdditionGroupM
         
         List<BoolVar> groupXVars = new ArrayList();
         IntVar count = model.newIntVar(0, this.improvedItems.size(), this.propertyName+"_count");
+        
         
         for(Item item : this.improvedItems) {
             IntVar x = null;
@@ -42,27 +43,29 @@ public class OneLevelQuantityBonusGroupManager extends SatQuantityAdditionGroupM
                 x = itemsMap.get(item);
             }
             groupXVars.add((BoolVar)x);
-
+            
         }
         
-        if(quantityThreshold <= 0 || singleBonus ==0) {
+        if(quantityThreshold <= 0 || itemBonus ==0) {
             return;   // nothing special, elements are created, return
         }
-        
         
         BoolVar[] xVarsArray = groupXVars.toArray(new BoolVar[0]);
         model.addEquality(count, LinearExpr.sum(xVarsArray));
         
-        BoolVar g = model.newBoolVar(this.propertyName + "_used_constant_bonus");
+        BoolVar g = model.newBoolVar(this.propertyName + "_used_bonus");
         model.addGreaterOrEqual(count, quantityThreshold).onlyEnforceIf(g);
         model.addLessOrEqual(count, quantityThreshold - 1).onlyEnforceIf(g.not());
         
-        obj.addTerm(g, singleBonus);
+        IntVar bonusValue = model.newIntVar(0, itemBonus * this.improvedItems.size(), this.propertyName+"_bonus");
+        model.addEquality(bonusValue, LinearExpr.term(count, itemBonus)).onlyEnforceIf(g);
+        model.addEquality(bonusValue, 0).onlyEnforceIf(g.not());
+        
+        obj.addTerm(bonusValue, 1);
         
         allVars.add(g);
         allVars.add(count);
+        allVars.add(bonusValue);
     }
-
-    
     
 }

@@ -15,10 +15,16 @@ import com.google.ortools.Loader;
 import com.google.ortools.sat.CpModel;
 import com.google.ortools.sat.CpSolver;
 import com.google.ortools.sat.CpSolverStatus;
+import com.google.ortools.sat.IntVar;
+import com.google.ortools.sat.LinearArgument;
+import com.google.ortools.sat.Literal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.dmieter.knapsack.group.manager.OldOneLevelQuantityProportionalDiscountGroupManager;
 import org.dmieter.knapsack.group.manager.OneLevelQuantityBonusGroupManager;
+import org.dmieter.knapsack.group.manager.OneLevelQuantityProportionalBonusGroupManager;
+import org.dmieter.knapsack.group.manager.OneLevelQuantityProportionalDiscountGroupManager;
 
 
 public class TestModelExample {
@@ -32,6 +38,8 @@ public class TestModelExample {
     public static void runTest() {
         
         //solveBruteForce(generateTestProblem());
+        solveGKA(generateTestProblem());
+        solveSat(generateTestProblem());
         solveGKA(generateTestProblem());
         solveSat(generateTestProblem());
     }
@@ -54,7 +62,8 @@ public class TestModelExample {
     public static void solveSat(IntervalKnapsackWithGroupsProblem groupProblem) {
         System.out.println("\n=========== CPSAT RESULT ============\n");
         
-        CpModel model = new KnapsackSatConverter().convertHierarchicalKnapsackProblem(groupProblem);
+        KnapsackSatConverter converter = new KnapsackSatConverter();
+        CpModel model = converter.convertHierarchicalKnapsackProblem(groupProblem);
         
         CpSolver solver = new CpSolver();
         Long startTime = System.nanoTime();
@@ -80,8 +89,10 @@ public class TestModelExample {
           totalWeight += binWeight;
 
           System.out.println("Total packed weight: " + totalWeight);*/
-          System.out.println("Problem solved in " + solver.wallTime() + " milliseconds");   
+          System.out.println("Problem solved in " + solver.wallTime() + " seconds");   
           System.out.println("Problem solved in, ms: " + (endTime - startTime)/1000000d);
+          converter.printResultDetails(solver);
+
         } else {
           System.err.println("The problem does not have an optimal solution.");
         }
@@ -103,15 +114,16 @@ public class TestModelExample {
     }
     
     public static IntervalKnapsackWithGroupsProblem generateTestProblem() {
-        int vmCount = 15;
-        int totalCost = 200;
+        int vmCount = 8;
+        int totalCost = 50;
 
         int genNum = vmCount;
-        int baseValue = 5;
+        
 
         // DC1
         int startingId = 101;
-        int dcCost = 9;
+        int baseValue = 5;
+        int dcCost = 10;
         List<Item> itemsDC1 = new ArrayList<>();
         for(int i = startingId; i < startingId + genNum; i++) {
             Item item = new Item(i,dcCost,baseValue);
@@ -121,7 +133,7 @@ public class TestModelExample {
         // DC2
         startingId = 201;
         baseValue = 3;
-        dcCost = 5;
+        dcCost = 4;
         List<Item> itemsDC2 = new ArrayList<>();
         for(int i = startingId; i < startingId + genNum; i++) {
             Item item = new Item(i,dcCost,baseValue);
@@ -130,8 +142,8 @@ public class TestModelExample {
 
         // DC3
         startingId = 301;
-        baseValue = 4;
-        dcCost = 7;
+        baseValue = 6;
+        dcCost = 8;
         List<Item> itemsDC3 = new ArrayList<>();
         for(int i = startingId; i < startingId + genNum; i++) {
             Item item = new Item(i,dcCost,baseValue);
@@ -140,7 +152,7 @@ public class TestModelExample {
 
         // DC4
         startingId = 401;
-        baseValue = 6;
+        baseValue = 10;
         dcCost = 12;
         List<Item> itemsDC4 = new ArrayList<>();
         for(int i = startingId; i < startingId + genNum; i++) {
@@ -150,7 +162,7 @@ public class TestModelExample {
 
         // DC5
         startingId = 501;
-        baseValue = 5;
+        baseValue = 7;
         dcCost = 10;
         List<Item> itemsDC5 = new ArrayList<>();
         for(int i = startingId; i < startingId + genNum; i++) {
@@ -161,7 +173,7 @@ public class TestModelExample {
         // DC6
         startingId = 601;
         baseValue = 10;
-        dcCost = 15;
+        dcCost = 16;
         List<Item> itemsDC6 = new ArrayList<>();
         for(int i = startingId; i < startingId + genNum; i++) {
             Item item = new Item(i,dcCost,baseValue);
@@ -171,22 +183,24 @@ public class TestModelExample {
 
 
         GroupItemKnapsack groupItemDC1 = new GroupItemKnapsack(1, itemsDC1);
-        groupItemDC1.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("DC1", 2, 4));
+        groupItemDC1.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("DC1", 2, 10));
 
         GroupItemKnapsack groupItemDC2 = new GroupItemKnapsack(2, itemsDC2);
-        groupItemDC2.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("DC2", 1, 2));
+        groupItemDC2.setGroupPropertyManager(new OneLevelQuantityProportionalDiscountGroupManager("DC2", 2, 5));
+        //groupItemDC2.setGroupPropertyManager(new OneLevelQuantityProportionalBonusGroupManager("DC2", 2, 3));
 
         GroupItemKnapsack groupItemDC3 = new GroupItemKnapsack(3, itemsDC3);
-        groupItemDC3.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("DC3", 3, 7));
+        groupItemDC3.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("DC3", 3, 1));
 
         GroupItemKnapsack groupItemDC4 = new GroupItemKnapsack(4, itemsDC4);
-        groupItemDC4.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("DC4", 2, 4));
+        groupItemDC4.setGroupPropertyManager(new OneLevelQuantityProportionalDiscountGroupManager("DC4", 2, 5));
+        //groupItemDC4.setGroupPropertyManager(new OneLevelQuantityProportionalBonusGroupManager("DC4", 3, 5));
 
         GroupItemKnapsack groupItemDC5 = new GroupItemKnapsack(5, itemsDC5);
-        groupItemDC5.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("DC5", 2, 10));
+        groupItemDC5.setGroupPropertyManager(new OneLevelQuantityProportionalBonusGroupManager("DC5", 2, 1));
 
         GroupItemKnapsack groupItemDC6 = new GroupItemKnapsack(6, itemsDC6);
-        groupItemDC6.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("DC6", 1, 3));
+        groupItemDC6.setGroupPropertyManager(new OneLevelQuantityProportionalBonusGroupManager("DC6", 2, 1));
 
 
         GroupItemGroupKnapsack groupItemZoneA = new GroupItemGroupKnapsack(1000, Arrays.asList(groupItemDC1));
@@ -196,7 +210,7 @@ public class TestModelExample {
         groupItemZoneB.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("Availability Zone B", 2, 8));
 
         GroupItemGroupKnapsack groupItemZoneC = new GroupItemGroupKnapsack(3000, Arrays.asList(groupItemDC4, groupItemDC5, groupItemDC6));
-        groupItemZoneC.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("Availability Zone C", 2, 10));
+        groupItemZoneC.setGroupPropertyManager(new OneLevelQuantityBonusGroupManager("Availability Zone C", 2, 1));
 
 
         List<GroupItem> regionGroupItems = Arrays.asList(groupItemZoneA, groupItemZoneB, groupItemZoneC);

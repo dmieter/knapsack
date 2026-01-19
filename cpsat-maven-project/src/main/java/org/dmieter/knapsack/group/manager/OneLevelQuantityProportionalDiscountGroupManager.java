@@ -7,25 +7,27 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.
 import com.google.ortools.sat.BoolVar;
 import com.google.ortools.sat.CpModel;
 import com.google.ortools.sat.IntVar;
+import com.google.ortools.sat.LinearArgument;
 import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
-
-public class OneLevelQuantityBonusGroupManager extends SatQuantityAdditionGroupManager {
+public class OneLevelQuantityProportionalDiscountGroupManager extends SatQuantityAdditionGroupManager {
     
     private int quantityThreshold = 0;
-    private int singleBonus = 0;
+    private int discount = 0;
     
     
-    public OneLevelQuantityBonusGroupManager(String name, int quantityThreshold, int singleBonus) {
-        super(name, k -> k >= quantityThreshold ? singleBonus : 0d, null);
+    public OneLevelQuantityProportionalDiscountGroupManager(String name, int quantityThreshold, int discount) {
+        super(name, null,  k -> k >= quantityThreshold ? (1 - 1.0 * discount/SatConvertableGroupManager.BASE_WEIGHT_MULTIPLIER) : 1d);
         this.quantityThreshold = quantityThreshold;
-        this.singleBonus = singleBonus;
+        this.discount = discount;
     }
+
 
     @Override
     public void createGroupInSatModel(CpModel model, LinearExprBuilder obj, LinearExprBuilder limit, Map<Item, IntVar> itemsMap, List<IntVar> allVars) {
@@ -33,6 +35,7 @@ public class OneLevelQuantityBonusGroupManager extends SatQuantityAdditionGroupM
         List<BoolVar> groupXVars = new ArrayList();
         IntVar count = model.newIntVar(0, this.improvedItems.size(), this.propertyName+"_count");
         
+        LinearExprBuilder discountFunction = LinearExpr.newBuilder();
         for(Item item : this.improvedItems) {
             IntVar x = null;
             if(!itemsMap.containsKey(item)) {
@@ -42,27 +45,30 @@ public class OneLevelQuantityBonusGroupManager extends SatQuantityAdditionGroupM
                 x = itemsMap.get(item);
             }
             groupXVars.add((BoolVar)x);
-
+            discountFunction.addTerm(x, discount*item.getWeight());
         }
         
-        if(quantityThreshold <= 0 || singleBonus ==0) {
+        if(quantityThreshold <= 0 || discount ==0) {
             return;   // nothing special, elements are created, return
         }
-        
         
         BoolVar[] xVarsArray = groupXVars.toArray(new BoolVar[0]);
         model.addEquality(count, LinearExpr.sum(xVarsArray));
         
-        BoolVar g = model.newBoolVar(this.propertyName + "_used_constant_bonus");
+        BoolVar g = model.newBoolVar(this.propertyName + "_used_discount");
         model.addGreaterOrEqual(count, quantityThreshold).onlyEnforceIf(g);
         model.addLessOrEqual(count, quantityThreshold - 1).onlyEnforceIf(g.not());
         
-        obj.addTerm(g, singleBonus);
+        IntVar discountValue = model.newIntVar(0, discount * this.improvedItems.size() * SatConvertableGroupManager.MAX_ITEM_WEIGHT
+                , this.propertyName + "_discount");
+        model.addEquality(discountValue, discountFunction).onlyEnforceIf(g);
+        model.addEquality(discountValue, 0).onlyEnforceIf(g.not());
+        
+        limit.addTerm(discountValue, -1);
         
         allVars.add(g);
         allVars.add(count);
+        allVars.add(discountValue);
     }
-
-    
     
 }
