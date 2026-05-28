@@ -1,3 +1,5 @@
+package org.or_tools.example;
+
 import com.google.ortools.sat.*;
 import java.util.*;
 

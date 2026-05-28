@@ -22,6 +22,12 @@
 </properties>
 
 <dependencies>
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-math3</artifactId>
+    <version>3.6.1</version>
+    <scope>compile</scope>
+</dependency>
   <dependency>
     <groupId>com.google.ortools</groupId>
     <artifactId>ortools-java</artifactId>

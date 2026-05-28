@@ -31,10 +31,39 @@ public class TestModelExample {
     
     public static void main(String[] args) {
         Loader.loadNativeLibraries();
-        runTest();
+        runTestExperiment();
     }
     
+    public static void runTestExperiment() {
+        ExperimentSeriesGenerator exp = new ExperimentSeriesGenerator();
+
+        Long startTime = System.nanoTime();
+
+        //exp.generateSeriesWithVaryingDataCenters();
+        //exp.generateSeriesWithVaryingBudgets();
+        //exp.generateSeriesWithVaryingVMs();
+        //exp.generateSeriesWithVaryingVendors();
+        exp.generateSeriesWithVaryingCorrelation();
+        //exp.generateSeriesWithVaryingRequestedVms();
+        //exp.generateSeriesWithVaryingRequestedVmsExpanding();
+        //exp.generateSeriesWithVaryingRequestedVmsExtended();
+
+        Long endTime = System.nanoTime();
+        System.out.println("\nTotal Time, s: " + (endTime - startTime)/1000000000d);
+    }
+
     
+    public static void runTestAutomated() {
+        
+    TestProblemGenerator generator = new TestProblemGenerator();
+
+        //solveBruteForce(generateTestProblem());
+        //solveGKA(generateTestProblem());
+        //solveSat(generateTestProblem());
+        solveGKA(generator.generateSimpleTestProblem());
+        solveSat(generator.generateSimpleTestProblem());
+    }
+
     public static void runTest() {
         
         //solveBruteForce(generateTestProblem());
@@ -113,6 +142,7 @@ public class TestModelExample {
             QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
     }
     
+
     public static IntervalKnapsackWithGroupsProblem generateTestProblem() {
         int vmCount = 8;
         int totalCost = 50;

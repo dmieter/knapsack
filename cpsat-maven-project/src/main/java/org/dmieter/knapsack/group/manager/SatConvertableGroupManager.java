@@ -12,7 +12,7 @@ import java.util.Map;
 public interface SatConvertableGroupManager {
 
     public static int MAX_ITEM_WEIGHT = 100;
-    public static int BASE_WEIGHT_MULTIPLIER = 10;  // we suppose all discounts will be like 0.1, 0.2, 0.3. etc.
+    public static int BASE_WEIGHT_MULTIPLIER = 100;  // we suppose all discounts will be like 0.1, 0.2, 0.3. etc.
     
     void createGroupInSatModel(CpModel model, LinearExprBuilder obj, LinearExprBuilder limit, Map<Item, IntVar> itemsMap, List<IntVar> allVars);
     

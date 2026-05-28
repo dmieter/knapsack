@@ -79,5 +79,9 @@ public class KnapsackSatConverter {
         }
         
     }
+
+    public Long getTotalCost(CpSolver solver) {
+        return solver.value(limitVar);
+    }
     
 }

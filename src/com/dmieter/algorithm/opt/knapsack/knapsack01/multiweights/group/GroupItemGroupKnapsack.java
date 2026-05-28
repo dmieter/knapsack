@@ -39,12 +39,12 @@ public class GroupItemGroupKnapsack extends GroupItem {
         // We should perform backward induction starting with values weight, amount, subItems.size()
         // Additionally may need to provide some log on what items from what groupitem and for what cost were selected
 
-        System.out.println("Retrieving " + amount + " items with weight " + weight + " from GroupItemGroupKnapsack " + id);
+        //System.out.println("Retrieving " + amount + " items with weight " + weight + " from GroupItemGroupKnapsack " + id);
 
         Integer startingWeight = weight;
         if(groupPropertyManager != null) {
             startingWeight = groupPropertyManager.getOriginWeight(weight, amount);
-            System.out.println("Original starting weight for this group is " + startingWeight);
+            //System.out.println("Original starting weight for this group is " + startingWeight);
         }
         
 
@@ -79,7 +79,7 @@ public class GroupItemGroupKnapsack extends GroupItem {
                 return null;
             }
         }
-        System.out.println("Returning following items from GroupKnapsackGroupItem " + id + ": " + selectedItems);
+        //System.out.println("Returning following items from GroupKnapsackGroupItem " + id + ": " + selectedItems);
         return selectedItems;
     }
 
@@ -112,7 +112,7 @@ public class GroupItemGroupKnapsack extends GroupItem {
         GroupItemIntervalKnapsackSolver solver = new GroupItemIntervalKnapsackSolver();
         boolean success = solver.solve(problem);
         //System.out.println(KnapsackAnalysis.getSolutionInfo(problem));
-        System.out.println("Inner problem for GroupItem " + id + " is finished: " + success);
+        //System.out.println("Inner problem for GroupItem " + id + " is finished: " + success);
 
         if(!success) {
             return;

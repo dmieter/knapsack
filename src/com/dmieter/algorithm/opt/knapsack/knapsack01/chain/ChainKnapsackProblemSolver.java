@@ -71,7 +71,7 @@ public class ChainKnapsackProblemSolver {
             ProblemChain problem = it.previous();
 
             ChainSolver solver = KnapsackSolverHelp.getSolver(problem);
-            System.out.println("Tight Weight: " + tightWeight);
+            //System.out.println("Tight Weight: " + tightWeight);
             if (!solver.performBackwardInduction(problem, tightWeight)) {
                 return false;
             }
