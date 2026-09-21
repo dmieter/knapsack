@@ -36,8 +36,8 @@
     <scope>compile</scope>
   </dependency>
     <dependency>
-        <groupId>local.lnapsack.group</groupId>
-        <artifactId>local.lnapsack.artifact</artifactId>
+        <groupId>local.knapsack.group</groupId>
+        <artifactId>local.knapsack.artifact</artifactId>
       <version>1.0</version>
     </dependency>
 </dependencies>
@@ -76,6 +76,7 @@
         </execution>
       </executions>
     </plugin>
+    <!-- Отключено: подпись нужна только для публикации, ломает локальный mvn install без GPG-ключа
     <plugin>
       <groupId>org.apache.maven.plugins</groupId>
       <artifactId>maven-gpg-plugin</artifactId>
@@ -90,6 +91,7 @@
         </execution>
       </executions>
     </plugin>
+    -->
   </plugins>
 </build>
 </project>
