@@ -2,6 +2,7 @@ package org.dmieter.knapsack.group.test;
 
 import org.dmieter.stat.NamedStats;
 
+import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -52,7 +53,7 @@ public class ExperimentSeriesGenerator {
     private static final List<Integer> REQUIRED_VMS_VALUES = Arrays.asList(5, 10, 11, 12, 15, 20, 30, 40, 50, 60);
     
     private static long globalSeedCounter = 100000L; // Starting seed for reproducibility
-    private static final int EXPERIMENT_REPETITIONS_COUNT = 300;
+    private static final int EXPERIMENT_REPETITIONS_COUNT = 3;
     private TestProblemGenerator generator = new TestProblemGenerator();
     
     private boolean startGKA = true;
@@ -68,6 +69,8 @@ public class ExperimentSeriesGenerator {
     private NamedStats valueStats = new NamedStats("VALUE stats");
     private NamedStats costStats = new NamedStats("COST stats");
     private NamedStats successStats = new NamedStats("SUCCESS stats");
+    private NamedStats peakMemoryStats = new NamedStats("PEAK HEAP DELTA (MB) stats");
+    private NamedStats allocMemoryStats = new NamedStats("ALLOCATED (MB) stats");
 
 
     public void generateSeriesWithVaryingDataCenters() {
@@ -563,14 +566,18 @@ public class ExperimentSeriesGenerator {
         
         QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
         GroupItemIntervalKnapsackSolver groupSolver = new GroupItemIntervalKnapsackSolver();
+        MemoryMeter meter = new MemoryMeter();
         Long startTime = System.nanoTime();
         boolean success = groupSolver.solve(groupProblem);
         Long endTime = System.nanoTime();
-        
+        double allocatedMb = meter.stopAllocatedMb();
+        double peakMb = meter.stopPeakMb();
 
         groupProblem.calculateStats();
         Double runtime = (endTime - startTime)/1000000d;
         runtimeStats.addValue("GKA_" + variable, runtime);
+        peakMemoryStats.addValue("GKA_" + variable, peakMb);
+        allocMemoryStats.addValue("GKA_" + variable, allocatedMb);
         System.out.println(runtime);
 
         if(success) {
@@ -586,6 +593,7 @@ public class ExperimentSeriesGenerator {
     
     public Double solveSat(IntervalKnapsackWithGroupsProblem groupProblem, Integer variable) {
                
+        MemoryMeter meter = new MemoryMeter();
         KnapsackSatConverter converter = new KnapsackSatConverter();
         CpModel model = converter.convertHierarchicalKnapsackProblem(groupProblem);
         CpSolver solver = new CpSolver();
@@ -594,9 +602,13 @@ public class ExperimentSeriesGenerator {
         Long startTime = System.nanoTime();
         final CpSolverStatus status = solver.solve(model);
         Long endTime = System.nanoTime();
+        double allocatedMb = meter.stopAllocatedMb();
+        double peakMb = meter.stopPeakMb();
         Double runtime = (endTime - startTime)/1000000d;
 
         runtimeStats.addValue("SAT_" + variable, runtime);
+        peakMemoryStats.addValue("SAT_" + variable, peakMb);
+        allocMemoryStats.addValue("SAT_" + variable, allocatedMb);
         System.out.println(runtime);
         
 
@@ -677,6 +689,8 @@ public class ExperimentSeriesGenerator {
         valueStats.clearStats();
         costStats.clearStats();
         successStats.clearStats();
+        peakMemoryStats.clearStats();
+        allocMemoryStats.clearStats();
     }
 
     private void printStats() {
@@ -688,6 +702,74 @@ public class ExperimentSeriesGenerator {
         System.out.println(valueStats.getData());
         System.out.println("\n=======================\n");
         System.out.println(runtimeStats.getData());
+        System.out.println("\n=======================\n");
+        System.out.println(peakMemoryStats.getData());
+        System.out.println("\n=======================\n");
+        System.out.println(allocMemoryStats.getData());
+    }
+
+    // Samples live heap during a solve and reports peak used heap plus bytes allocated by the calling thread.
+    private static class MemoryMeter {
+
+        private final com.sun.management.ThreadMXBean threadBean;
+        private final long threadId;
+        private final long allocatedBefore;
+        private final long baseline;
+        private final Thread sampler;
+        private volatile boolean running = true;
+        private volatile long peak;
+
+        MemoryMeter() {
+            java.lang.management.ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+            threadBean = bean instanceof com.sun.management.ThreadMXBean ? (com.sun.management.ThreadMXBean) bean : null;
+            threadId = Thread.currentThread().getId();
+            allocatedBefore = allocatedBytes();
+            Runtime runtime = Runtime.getRuntime();
+            baseline = runtime.totalMemory() - runtime.freeMemory();
+            sampler = new Thread(this::sample, "heap-sampler");
+            sampler.setDaemon(true);
+            sampler.start();
+        }
+
+        private long allocatedBytes() {
+            if (threadBean == null || !threadBean.isThreadAllocatedMemorySupported()) {
+                return -1;
+            }
+            return threadBean.getThreadAllocatedBytes(threadId);
+        }
+
+        private void sample() {
+            Runtime runtime = Runtime.getRuntime();
+            while (running) {
+                long used = runtime.totalMemory() - runtime.freeMemory();
+                if (used > peak) {
+                    peak = used;
+                }
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }
+
+        double stopAllocatedMb() {
+            long allocatedAfter = allocatedBytes();
+            if (allocatedBefore < 0 || allocatedAfter < 0) {
+                return -1d;
+            }
+            return (allocatedAfter - allocatedBefore) / (1024d * 1024d);
+        }
+
+        double stopPeakMb() {
+            running = false;
+            try {
+                sampler.join(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return Math.max(0, peak - baseline) / (1024d * 1024d);
+        }
     }
 }
 

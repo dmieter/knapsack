@@ -345,7 +345,22 @@ public class Example {
         System.out.println(KnapsackAnalysis.getSolutionInfo(plainProblem));
         System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
 
-        // 3. Solve with brute
+        // 3. Solve with greedy heuristic
+        System.out.println("\n=========== GREEDY RESULT ============\n");
+        IntervalKnapsackWithGroupsProblem greedyProblem = new IntervalKnapsackWithGroupsProblem();
+        greedyProblem.setGroupItems(groupItems);
+        greedyProblem.setMaxWeight(100);
+        greedyProblem.setMinItemsNumber(3);
+        greedyProblem.setMaxItemsNumber(4);
+
+        GroupItemIntervalKnapsackGreedySolver greedySolver = new GroupItemIntervalKnapsackGreedySolver();
+        startTime = System.nanoTime();
+        boolean greedySuccess = greedySolver.solve(greedyProblem);
+        endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(greedyProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
+
+        // 4. Solve with brute
         System.out.println("\n=========== BRUTE FORCE RESULT ============\n");
         BruteForceIntervalKnapsackSolver bruteSolver = new BruteForceIntervalKnapsackSolver();
         startTime = System.nanoTime();
@@ -353,7 +368,7 @@ public class Example {
         endTime = System.nanoTime();
         System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
         System.out.println("\nTime, ms: " + (endTime - startTime) * 1d/1000000);
-        System.out.println("\nFinished: " + groupSuccess + " " + plainSuccess + " " + bruteSuccess);
+        System.out.println("\nFinished: " + groupSuccess + " " + plainSuccess + " " + greedySuccess + " " + bruteSuccess);
         
     }
 
@@ -400,7 +415,20 @@ public class Example {
         System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
         System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
 
-        
+        // 2. Solve with greedy heuristic
+        System.out.println("\n=========== GREEDY RESULT ============\n");
+        IntervalKnapsackWithGroupsProblem greedyProblem = new IntervalKnapsackWithGroupsProblem();
+        greedyProblem.setGroupItems(groupItems);
+        greedyProblem.setMaxWeight(100);
+        greedyProblem.setMinItemsNumber(3);
+        greedyProblem.setMaxItemsNumber(3);
+
+        GroupItemIntervalKnapsackGreedySolver greedySolver = new GroupItemIntervalKnapsackGreedySolver();
+        startTime = System.nanoTime();
+        boolean greedySuccess = greedySolver.solve(greedyProblem);
+        endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(greedyProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
 
         // 3. Solve with brute
         System.out.println("\n=========== BRUTE FORCE RESULT ============\n");
@@ -410,7 +438,7 @@ public class Example {
         endTime = System.nanoTime();
         System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
         System.out.println("\nTime, ms: " + (endTime - startTime) * 1d/1000000);
-        System.out.println("\nFinished: " + groupSuccess + " " + bruteSuccess);
+        System.out.println("\nFinished: " + groupSuccess + " " + greedySuccess + " " + bruteSuccess);
         
     }
 
@@ -496,6 +524,21 @@ public class Example {
         groupProblem.calculateStats();
         QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
 
+        // 2. Solve with greedy heuristic
+        System.out.println("\n=========== GREEDY RESULT ============\n");
+        IntervalKnapsackWithGroupsProblem greedyProblem = new IntervalKnapsackWithGroupsProblem();
+        greedyProblem.setGroupItems(groupItems);
+        greedyProblem.setMaxWeight(100);
+        greedyProblem.setMinItemsNumber(3);
+        greedyProblem.setMaxItemsNumber(3);
+
+        GroupItemIntervalKnapsackGreedySolver greedySolver = new GroupItemIntervalKnapsackGreedySolver();
+        startTime = System.nanoTime();
+        boolean greedySuccess = greedySolver.solve(greedyProblem);
+        endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(greedyProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
+
         // 3. Solve with brute
         System.out.println("\n=========== BRUTE FORCE RESULT ============\n");
         BruteForceIntervalKnapsackSolver bruteSolver = new BruteForceIntervalKnapsackSolver();
@@ -504,7 +547,7 @@ public class Example {
         endTime = System.nanoTime();
         System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
         System.out.println("\nTime, ms: " + (endTime - startTime) * 1d/1000000);
-        System.out.println("\nFinished: " + groupSuccess + " " + bruteSuccess);
+            System.out.println("\nFinished: " + groupSuccess + " " + greedySuccess + " " + bruteSuccess);
 
         QuantityMultiplierWeightGroupManager.PRINT_LOGS = true;
         groupProblem.calculateStats();
@@ -625,6 +668,21 @@ public class Example {
         groupProblem.calculateStats();
         QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
 
+        // 2. Solve with greedy heuristic
+        System.out.println("\n=========== GREEDY RESULT ============\n");
+        IntervalKnapsackWithGroupsProblem greedyProblem = new IntervalKnapsackWithGroupsProblem();
+        greedyProblem.setGroupItems(regionGroupItems);
+        greedyProblem.setMaxWeight(totalCost);
+        greedyProblem.setMinItemsNumber(vmCount);
+        greedyProblem.setMaxItemsNumber(vmCount);
+
+        GroupItemIntervalKnapsackGreedySolver greedySolver = new GroupItemIntervalKnapsackGreedySolver();
+        startTime = System.nanoTime();
+        boolean greedySuccess = greedySolver.solve(greedyProblem);
+        endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(greedyProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
+
         // 3. Solve with brute
         if(true) {
             System.out.println("\n=========== BRUTE FORCE RESULT ============\n");
@@ -634,7 +692,7 @@ public class Example {
             endTime = System.nanoTime();
             System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
             System.out.println("\nTime, ms: " + (endTime - startTime) * 1d / 1000000);
-            System.out.println("\nFinished: " + groupSuccess + " " + bruteSuccess);
+        System.out.println("\nFinished: " + groupSuccess + " " + greedySuccess + " " + bruteSuccess);
 
             QuantityMultiplierWeightGroupManager.PRINT_LOGS = true;
             groupProblem.calculateStats();

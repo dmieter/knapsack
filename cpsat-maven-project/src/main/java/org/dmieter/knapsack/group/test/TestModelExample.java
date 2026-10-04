@@ -43,8 +43,8 @@ public class TestModelExample {
         //exp.generateSeriesWithVaryingBudgets();
         //exp.generateSeriesWithVaryingVMs();
         //exp.generateSeriesWithVaryingVendors();
-        exp.generateSeriesWithVaryingCorrelation();
-        //exp.generateSeriesWithVaryingRequestedVms();
+        //exp.generateSeriesWithVaryingCorrelation();
+        exp.generateSeriesWithVaryingRequestedVms();
         //exp.generateSeriesWithVaryingRequestedVmsExpanding();
         //exp.generateSeriesWithVaryingRequestedVmsExtended();
 
