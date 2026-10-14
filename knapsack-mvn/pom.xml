@@ -15,10 +15,31 @@
 <properties>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   <maven.compiler.release>8</maven.compiler.release>
+  <exec.mainClass>com.dmieter.algorithm.opt.knapsack.Example</exec.mainClass>
 </properties>
 
 <build>
   <directory>${project.basedir}/build</directory>
   <finalName>knapsack</finalName>
+
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.11.0</version>
+      <configuration>
+        <release>${maven.compiler.release}</release>
+      </configuration>
+    </plugin>
+
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>exec-maven-plugin</artifactId>
+      <version>3.1.0</version>
+      <configuration>
+        <mainClass>${exec.mainClass}</mainClass>
+      </configuration>
+    </plugin>
+  </plugins>
 </build>
 </project>

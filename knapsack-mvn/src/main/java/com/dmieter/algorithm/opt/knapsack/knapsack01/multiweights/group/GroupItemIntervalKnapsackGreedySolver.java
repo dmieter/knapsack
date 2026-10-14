@@ -12,6 +12,7 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.FixedItemsNumb
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IKnapsack01MultiWeightsSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.MultiWeightsKnapsackProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItem.ItemVariant;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.QuantityAdditionWeightGroupManager;
 
 // Greedy heuristic for IntervalKnapsackWithGroupsProblem: optimistic discounts + threshold greedy + swap improvement.
 public class GroupItemIntervalKnapsackGreedySolver implements IKnapsack01MultiWeightsSolver {
@@ -19,40 +20,102 @@ public class GroupItemIntervalKnapsackGreedySolver implements IKnapsack01MultiWe
     private static final int MAX_ITERATIONS = 10;
     private static final double EPS = 1e-9;
 
+    // Maximum number of improving swaps performed by the local-search stage; Integer.MAX_VALUE means
+    // "until no single swap improves the solution". 0 disables swaps entirely (pure greedy).
+    private int maxSwapIterations = Integer.MAX_VALUE;
+
+    public GroupItemIntervalKnapsackGreedySolver() {
+    }
+
+    public GroupItemIntervalKnapsackGreedySolver(int maxSwapIterations) {
+        this.maxSwapIterations = maxSwapIterations;
+    }
+
+    public void setMaxSwapIterations(int maxSwapIterations) {
+        this.maxSwapIterations = maxSwapIterations;
+    }
+
+    public int getMaxSwapIterations() {
+        return maxSwapIterations;
+    }
+
     public boolean solve(IntervalKnapsackWithGroupsProblem problem) {
         problem.resetSolution();
 
         List<Item> items = collectLeafItems(problem);
-        int requiredItems = problem.getMaxItemsNumber();
+        int minItems = problem.getMinItemsNumber();
+        int maxItems = Math.min(problem.getMaxItemsNumber(), items.size());
         int maxWeight = problem.getMaxWeight();
 
-        if (items.size() < requiredItems) {
+        if (items.size() < minItems) {
             return false;
         }
 
-        // Step 1 + 2: greedy with maximum (optimistic) group discounts/bonuses, then swap improvement.
-        List<Item> selected = greedyAndImprove(problem, items, computeFactors(problem, null), requiredItems, maxWeight);
-        boolean feasible = isFeasible(problem, selected);
+        // Try every allowed item count in [minItems, maxItems] and keep the best feasible solution.
+        List<Item> best = null;
+        double bestValue = Double.NEGATIVE_INFINITY;
 
-        // Step 3: retry with real discounts for groups that contributed to the selection.
-        for (int iteration = 0; !feasible && iteration < MAX_ITERATIONS; iteration++) {
-            List<Item> next = greedyAndImprove(problem, items,
-                    computeFactors(problem, countSelected(problem, selected)), requiredItems, maxWeight);
-            if (isFeasible(problem, next)) {
-                selected = next;
-                feasible = true;
-            } else if (next.equals(selected)) {
-                break;
-            } else {
-                selected = next;
+        for (int requiredItems = minItems; requiredItems <= maxItems; requiredItems++) {
+            List<Item> candidate = solveForItemsNumber(problem, items, requiredItems, maxWeight);
+            if (candidate == null) {
+                continue;
+            }
+            evaluate(problem, candidate);
+            double value = problem.getImprovedTotalValue();
+            if (value > bestValue + EPS) {
+                bestValue = value;
+                best = candidate;
             }
         }
 
-        if (!feasible) {
+        if (best == null) {
             return false;
         }
 
-        return isFeasible(problem, selected);
+        evaluate(problem, best);
+        return true;
+    }
+
+    // Fixed-point iteration for a fixed item count: start with maximum (optimistic) group
+    // discounts/bonuses and monotonically tighten the assumed usage of groups actually selected.
+    // Returns a feasible selection, or null if none was found for this item count.
+    private List<Item> solveForItemsNumber(IntervalKnapsackWithGroupsProblem problem, List<Item> items,
+            int requiredItems, int maxWeight) {
+        Map<GroupItem, Integer> assumedCounts = new HashMap<>();
+        List<Item> selected = null;
+
+        for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+            selected = greedyAndImprove(problem, items, computeFactors(problem, assumedCounts),
+                    requiredItems, maxWeight);
+
+            if (isFeasible(problem, selected)) {
+                return selected;
+            }
+
+            if (!refineAssumptions(assumedCounts, countSelected(problem, selected))) {
+                break;
+            }
+        }
+
+        return isFeasible(problem, selected) ? selected : null;
+    }
+
+    // Monotonically tighten per-group assumptions: observed usage can only lower the assumed count,
+    // groups with zero usage keep their previous assumption (never reset back to the optimistic max).
+    private boolean refineAssumptions(Map<GroupItem, Integer> assumed, Map<GroupItem, Integer> actual) {
+        boolean changed = false;
+        for (Map.Entry<GroupItem, Integer> entry : actual.entrySet()) {
+            int used = entry.getValue();
+            if (used <= 0) {
+                continue;
+            }
+            Integer previous = assumed.get(entry.getKey());
+            if (previous == null || used < previous) {
+                assumed.put(entry.getKey(), used);
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     // Run greedy construction and immediately improve the intermediate solution with swaps.
@@ -67,9 +130,14 @@ public class GroupItemIntervalKnapsackGreedySolver implements IKnapsack01MultiWe
             List<Item> selection, int maxWeight) {
 
         List<Item> selected = new ArrayList<>(selection);
-        boolean changed = true;
+        if (maxSwapIterations <= 0) {
+            return selected;
+        }
 
-        while (changed) {
+        boolean changed = true;
+        int performedSwaps = 0;
+
+        while (changed && performedSwaps < maxSwapIterations) {
             changed = false;
 
             List<Item> removable = new ArrayList<>(selected);
@@ -102,6 +170,7 @@ public class GroupItemIntervalKnapsackGreedySolver implements IKnapsack01MultiWe
                     selected.remove(out);
                     selected.add(bestIn);
                     changed = true;
+                    performedSwaps++;
                     break;
                 }
             }
@@ -150,7 +219,9 @@ public class GroupItemIntervalKnapsackGreedySolver implements IKnapsack01MultiWe
         return selected;
     }
 
-    // Step 1: per-item weight/value factors, using maximum group discounts/bonuses when counts is null.
+    // Per-item {weightFactor, valueFactor, valueAdd} for the given per-group assumed usage; groups
+    // absent from counts (never observed) use the maximum optimistic group discounts/bonuses.
+    // Multiplicative value boosts accumulate into valueFactor; additive bonuses into valueAdd.
     private Map<Item, double[]> computeFactors(IntervalKnapsackWithGroupsProblem problem, Map<GroupItem, Integer> counts) {
         Map<Item, double[]> factors = new HashMap<>();
         for (GroupItem groupItem : problem.getGroupItems()) {
@@ -159,7 +230,8 @@ public class GroupItemIntervalKnapsackGreedySolver implements IKnapsack01MultiWe
         return factors;
     }
 
-    // Recursively derive group factors from manager.createItemVariant and multiply them along the tree.
+    // Recursively derive group factors from manager.createItemVariant: multiplicative boosts are
+    // multiplied along the tree, additive bonuses are summed as absolute per-item increments.
     private void accumulateFactors(GroupItem group, Map<GroupItem, Integer> counts, Map<Item, double[]> factors) {
         List<Item> leaves = group.collectInnerSubItems();
         if (leaves.isEmpty()) {
@@ -175,26 +247,30 @@ public class GroupItemIntervalKnapsackGreedySolver implements IKnapsack01MultiWe
 
         double weightFactor = 1d;
         double valueFactor = 1d;
+        double valueAdd = 0d;
         if (group.groupPropertyManager != null && rawWeight > 0) {
-            int assumedCount = leaves.size();
-            if (counts != null) {
-                Integer selectedCount = counts.get(group);
-                if (selectedCount != null && selectedCount > 0) {
-                    assumedCount = selectedCount;
-                }
-            }
-            ItemVariant variant = group.groupPropertyManager.createItemVariant(
-                    Math.min(assumedCount, leaves.size()), (int) rawWeight, rawValue);
+            // Maximum optimistic assumption for groups that were never observed; otherwise the
+            // (monotonically tightened) real usage. Zero usage means the group is not improved.
+            int assumedCount = counts != null && counts.containsKey(group) ? counts.get(group) : leaves.size();
+            int usedCount = Math.min(assumedCount, leaves.size());
+            ItemVariant variant = group.groupPropertyManager.createItemVariant(usedCount, (int) rawWeight, rawValue);
             weightFactor = variant.weight / rawWeight;
-            if (rawValue != 0) {
+            if (group.groupPropertyManager instanceof QuantityAdditionWeightGroupManager) {
+                // Additive group bonuses are absolute amounts (not multipliers) and cannot be folded
+                // into a per-item factor; distribute the group bonus equally among its items instead.
+                if (usedCount > 0) {
+                    valueAdd = (variant.value - rawValue) / usedCount;
+                }
+            } else if (rawValue != 0) {
                 valueFactor = variant.value / rawValue;
             }
         }
 
         for (Item item : leaves) {
-            double[] factor = factors.computeIfAbsent(item, key -> new double[] { 1d, 1d });
+            double[] factor = factors.computeIfAbsent(item, key -> new double[] { 1d, 1d, 0d });
             factor[0] *= weightFactor;
             factor[1] *= valueFactor;
+            factor[2] += valueAdd;
         }
 
         if (group instanceof GroupItemGroupKnapsack) {
@@ -250,7 +326,7 @@ public class GroupItemIntervalKnapsackGreedySolver implements IKnapsack01MultiWe
 
     private double effectiveValue(Item item, Map<Item, double[]> factors) {
         double[] factor = factors.get(item);
-        return factor == null ? item.getValue() : item.getValue() * factor[1];
+        return factor == null ? item.getValue() : item.getValue() * factor[1] + factor[2];
     }
 
     private double efficiency(Item item) {
