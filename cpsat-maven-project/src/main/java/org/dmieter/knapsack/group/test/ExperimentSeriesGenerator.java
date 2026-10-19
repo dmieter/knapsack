@@ -16,6 +16,7 @@ import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.BruteForceInte
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IKnapsack01MultiWeightsSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.IntervalItemsNumberKnapsackSolver;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemIntervalKnapsackGreedySolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemIntervalKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.IntervalKnapsackWithGroupsProblem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.manager.QuantityMultiplierWeightGroupManager;
@@ -60,6 +61,8 @@ public class ExperimentSeriesGenerator {
     private boolean startKnapsack = true;
     private boolean startSat = true;
     private boolean startBF = false;
+    private boolean startGreedy = true;
+    private int greedySwaps = 100;
 
     private Double SAT_MAX_WAIT_TIME_SECONDS = 11d;
     private int SAT_TURN_OFF_TIME_MS = 10000;
@@ -313,6 +316,10 @@ public class ExperimentSeriesGenerator {
             }   
         }
 
+        if(startGreedy) {
+            solveGreedy(problemSupplier.get(), variable);
+        }
+
         if(startBF) {
             Double bfRuntime = solveBruteForce(problemSupplier.get(), variable);
             if(bfRuntime >= 3000) {
@@ -329,7 +336,7 @@ public class ExperimentSeriesGenerator {
             }   
         }
 
-        return startGKA || startSat || startBF || startKnapsack;
+        return startGKA || startSat || startGreedy || startBF || startKnapsack;
     }
 
     private IntervalKnapsackWithGroupsProblem generateStandardProblemWithVaryingDataCenters(long seed, int dataCentersPerVendor) {
@@ -545,6 +552,7 @@ public class ExperimentSeriesGenerator {
             // these should be equal problems prepared for different solvers
             IntervalKnapsackWithGroupsProblem problem1 = problemGenerator.apply(warmupSeed, parameter);
             IntervalKnapsackWithGroupsProblem problem2 = problemGenerator.apply(warmupSeed, parameter);
+            IntervalKnapsackWithGroupsProblem problem3 = problemGenerator.apply(warmupSeed, parameter);
             
             // Solve problems but don't record stats for warm-up
             solveGKA(problem1, parameter);
@@ -552,6 +560,8 @@ public class ExperimentSeriesGenerator {
             if(startSat) {
                 solveSat(problem2, parameter);
             }
+
+            solveGreedy(problem3, parameter);
         }
     }
     
@@ -586,6 +596,36 @@ public class ExperimentSeriesGenerator {
             costStats.addValue("GKA_" + variable, groupProblem.getImprovedTotalWeight().doubleValue());
         } else {
             successStats.addValue("GKA_" + variable, 0d);
+        }
+        
+        return runtime;
+    }
+    
+    public Double solveGreedy(IntervalKnapsackWithGroupsProblem groupProblem, Integer variable) {
+        
+        String tag = "GRD" + greedySwaps + "_";
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
+        GroupItemIntervalKnapsackGreedySolver greedySolver = new GroupItemIntervalKnapsackGreedySolver(greedySwaps);
+        MemoryMeter meter = new MemoryMeter();
+        Long startTime = System.nanoTime();
+        boolean success = greedySolver.solve(groupProblem);
+        Long endTime = System.nanoTime();
+        double allocatedMb = meter.stopAllocatedMb();
+        double peakMb = meter.stopPeakMb();
+
+        groupProblem.calculateStats();
+        Double runtime = (endTime - startTime)/1000000d;
+        runtimeStats.addValue(tag + variable, runtime);
+        peakMemoryStats.addValue(tag + variable, peakMb);
+        allocMemoryStats.addValue(tag + variable, allocatedMb);
+        System.out.println(runtime);
+
+        if(success) {
+            successStats.addValue(tag + variable, 1d);
+            valueStats.addValue(tag + variable, groupProblem.getImprovedTotalValue());
+            costStats.addValue(tag + variable, groupProblem.getImprovedTotalWeight().doubleValue());
+        } else {
+            successStats.addValue(tag + variable, 0d);
         }
         
         return runtime;
@@ -694,8 +734,8 @@ public class ExperimentSeriesGenerator {
     }
 
     private void printStats() {
-        //System.out.println("\n=======================\n");
-        //System.out.println(successStats.getData());
+        System.out.println("\n=======================\n");
+        System.out.println(successStats.getData());
         System.out.println("\n=======================\n");
         System.out.println(costStats.getData());
         System.out.println("\n=======================\n");

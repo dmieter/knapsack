@@ -6,6 +6,7 @@ import com.dmieter.algorithm.opt.knapsack.KnapsackAnalysis;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.BruteForceIntervalKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItem;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemGroupKnapsack;
+import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemIntervalKnapsackGreedySolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemIntervalKnapsackSolver;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.GroupItemKnapsack;
 import com.dmieter.algorithm.opt.knapsack.knapsack01.multiweights.group.IntervalKnapsackWithGroupsProblem;
@@ -61,6 +62,7 @@ public class TestModelExample {
         //solveGKA(generateTestProblem());
         //solveSat(generateTestProblem());
         solveGKA(generator.generateSimpleTestProblem());
+        solveGreedy(generator.generateSimpleTestProblem());
         solveSat(generator.generateSimpleTestProblem());
     }
 
@@ -68,8 +70,10 @@ public class TestModelExample {
         
         //solveBruteForce(generateTestProblem());
         solveGKA(generateTestProblem());
+        solveGreedy(generateTestProblem());
         solveSat(generateTestProblem());
         solveGKA(generateTestProblem());
+        solveGreedy(generateTestProblem());
         solveSat(generateTestProblem());
     }
     
@@ -78,6 +82,21 @@ public class TestModelExample {
         GroupItemIntervalKnapsackSolver groupSolver = new GroupItemIntervalKnapsackSolver();
         Long startTime = System.nanoTime();
         boolean groupSuccess = groupSolver.solve(groupProblem);
+        Long endTime = System.nanoTime();
+        System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
+
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
+        groupProblem.calculateStats();
+        QuantityMultiplierWeightGroupManager.PRINT_LOGS = false;
+        System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
+    }
+    
+    public static void solveGreedy(IntervalKnapsackWithGroupsProblem groupProblem) {
+        System.out.println("\n=========== GREEDY RESULT ============\n");
+        GroupItemIntervalKnapsackGreedySolver greedySolver = new GroupItemIntervalKnapsackGreedySolver(0);
+        Long startTime = System.nanoTime();
+        boolean greedySuccess = greedySolver.solve(groupProblem);
         Long endTime = System.nanoTime();
         System.out.println(KnapsackAnalysis.getSolutionInfo(groupProblem));
         System.out.println("\nTime, ms: " + (endTime - startTime)/1000000d);
